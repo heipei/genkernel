@@ -72,23 +72,24 @@ append_blkid(){
 	rm -rf "${TEMP}/initramfs-blkid-temp" > /dev/null
 }
 
-#append_suspend(){
-#	if [ -d "${TEMP}/initramfs-suspend-temp" ];
-#	then
-#		rm -r "${TEMP}/initramfs-suspend-temp/"
-#	fi
-#	print_info 1 'SUSPEND: Adding support (compiling binaries)...'
-#	compile_suspend
-#	mkdir -p "${TEMP}/initramfs-suspend-temp/"
-#	/bin/tar -jxpf "${SUSPEND_BINCACHE}" -C "${TEMP}/initramfs-suspend-temp" ||
-#		gen_die "Could not extract suspend binary cache!"
-#	mkdir -p "${TEMP}/initramfs-suspend-temp/etc"
-#	cp -f /etc/suspend.conf "${TEMP}/initramfs-suspend-temp/etc" ||
-#		gen_die 'Could not copy /etc/suspend.conf'
-#	cd "${TEMP}/initramfs-suspend-temp/"
-#	find . -print | cpio ${CPIO_ARGS} --append -F "${CPIO}"
-#	rm -r "${TEMP}/initramfs-suspend-temp/"
-#}
+append_suspend(){
+	if [ -d "${TEMP}/initramfs-suspend-temp" ];
+	then
+		rm -r "${TEMP}/initramfs-suspend-temp/"
+	fi
+	print_info 1 'SUSPEND: Adding support ...'
+	mkdir -p "${TEMP}/initramfs-suspend-temp/"
+	mkdir -p "${TEMP}/initramfs-suspend-temp/etc"
+	cp -f /etc/suspend.conf "${TEMP}/initramfs-suspend-temp/etc" ||
+		gen_die 'Could not copy /etc/suspend.conf'
+	mkdir -p "${TEMP}/initramfs-suspend-temp/sbin"
+	# FIXME: This probably needs to be customized
+	cp -f /usr/lib64/suspend/resume "${TEMP}/initramfs-suspend-temp/sbin" ||
+		gen_die 'Could not copy resume binary'
+	cd "${TEMP}/initramfs-suspend-temp/"
+	find . -print | cpio ${CPIO_ARGS} --append -F "${CPIO}"
+	rm -r "${TEMP}/initramfs-suspend-temp/"
+}
 
 append_dmraid(){
 	if [ -d "${TEMP}/initramfs-dmraid-temp" ]
@@ -467,6 +468,7 @@ create_initramfs() {
 	append_data 'dmraid' "${DMRAID}"
 	append_data 'evms' "${EVMS}"
 	append_data 'mdadm' "${MDADM}"
+	append_data 'suspend' "1"
 	
 	if [ "${NOINITRDMODULES}" -eq '0' ]
 	then

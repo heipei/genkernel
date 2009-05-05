@@ -626,6 +626,12 @@ startVolumes() {
 			else
 				/sbin/dmraid -ay ${DMRAID_OPTS}
 			fi
+
+			if [ "${NORESUME}" != '1' ] && [ -n "${REAL_RESUME}" ]
+			then
+				echo "Trying to use suspend_resume"
+				suspend_resume
+			fi
 		fi
 	fi
 
@@ -900,6 +906,18 @@ swsusp_resume() {
 	local device=$(ls -l "${REAL_RESUME}" | sed 's/\ */ /g' | cut -d \  -f 6-7 | sed 's/,\ */:/')
 	[ -f /sys/power/resume ] && echo "${device}" > /sys/power/resume
 	return 0
+}
+
+suspend_resume() {
+	which resume > /dev/null 2>&1 || (echo "resume not found..."; return)
+	local args
+	local features="$(resume --version | grep FEATURES)"
+	[ -n "${REAL_RESUME}" ] && args="${args} --resume_device=\"${REAL_RESUME}\""
+	if ! grep suspend_noui /proc/cmdline > /dev/null 2>&1; then
+		echo "${features}" | grep "fbsplash" > /dev/null && grep "splash=" /proc/cmdline > /dev/null && args="${args} --parameter=\"splash=y\""
+	fi
+	[ -c /dev/snapshot ] || mknod /dev/snapshot c 10 231
+	eval resume ${args}
 }
 
 tuxonice_resume() {

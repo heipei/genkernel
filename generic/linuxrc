@@ -243,9 +243,9 @@ then
 	startLUKS
 	if [ "${NORESUME}" != '1' ] && [ -n "${REAL_RESUME}" ]
 	then
-		swsusp_resume
+#		swsusp_resume
 #		suspend_resume
-		tuxonice_resume
+#		tuxonice_resume
 	fi
 fi
 
